@@ -10,9 +10,10 @@ sdk_platforms = {
 }
 
 sdk_suffix = '2.cs2'
-sdk_code = 25
 sdk_cpp_args = [
-  '-DCS2'
+  '-DSOURCE_ENGINE=25',
+  '-DSE_CS2=25',
+  '-DCS2',
 ]
 
 sdk_source2 = true
