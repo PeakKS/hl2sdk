@@ -111,7 +111,7 @@ if target_machine.system() == 'linux'
   endif
 
   sdk_cpp_args = [
-    '-D_GLIBCXX_USE_CX11_ABI=0'
+    '-D_GLIBCXX_USE_CXX11_ABI=0'
   ]
 
   protoc = find_program('devtools/bin/linux/protoc')
