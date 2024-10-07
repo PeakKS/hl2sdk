@@ -92,7 +92,7 @@ subdir('mathlib')
 subdir('tier1')
 subdir('interfaces')
 
-sdk_static_libs = [
+sdk_libs = [
   mathlib,
   tier1,
   interfaces,
@@ -102,10 +102,10 @@ compiler = meson.get_compiler('cpp')
 
 if target_machine.system() == 'linux'
   if target_machine.cpu_family() == 'x86_64'
-    sdk_static_libs += [
+    sdk_deps = [
       compiler.find_library('protobuf', dirs: [meson.project_source_root() + '/lib/linux64/release']),
+      compiler.find_library('tier0', dirs: [meson.project_source_root() + '/lib/linux64']),
     ]
-    sdk_dynamic_libs = compiler.find_library('tier0', dirs: [meson.project_source_root() + '/lib/linux64'])
   endif
 
   sdk_cpp_args = [
@@ -115,7 +115,7 @@ if target_machine.system() == 'linux'
   protoc = find_program('devtools/bin/linux/protoc')
 
 elif target_machine.system() == 'windows'
-  sdk_static_libs += [
+  sdk_deps = [
     compiler.find_library('tier0', dirs: [meson.project_source_root() + '/lib/public/win64']),
     compiler.find_library('protobuf', dirs: [meson.project_source_root() + '/lib/public/win64/2015']),
   ]
