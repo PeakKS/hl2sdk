@@ -1,6 +1,5 @@
-project('hl2sdk-cs2', 'cpp', default_options: [
+project('hl2sdk-cs2', 'c', 'cpp', default_options: [
   'warning_level=1',
-  'werror=true',
   'cpp_std=c++14',
 ])
 
@@ -31,17 +30,82 @@ sdk_inc = include_directories([
   'common'
 ])
 
+public_inc = include_directories('public')
+tier0_inc = include_directories('public/tier0')
+tier1_inc = include_directories('public/tier1')
+mathlib_inc = include_directories('public/mathlib')
+
+sdklib_cflags = [
+  '-fno-strict-aliasing',
+  '-Wall',
+  '-Wsign-compare',
+  '-Wno-conversion',
+  '-Wno-overloaded-virtual',
+  '-Wno-non-virtual-dtor',
+  '-Wno-invalid-offsetof',
+  '-Wno-unknown-pragmas',
+  '-Wno-unused',
+  '-Wno-c++11-narrowing',
+  '-Wno-register',
+  '-O3',
+  '-march=nocona',
+  '-mmmx',
+  '-msse',
+  '-msse2',
+  '-m64',
+]
+
+sdklib_defines = []
+if target_machine.system() == 'linux'
+  sdklib_defines += [
+    '-D_LINUX',
+    '-DLINUX',
+  ]
+endif
+
+sdklib_defines += [
+  '-DX64BITS',
+  '-DPLATFORM_64BITS',
+  '-DVPROF_LEVEL=1',
+  '-DSWDS',
+  '-D_finite=finite',
+  '-Dstricmp=strcasecmp',
+  '-D_stricmp=strcasecmp',
+  '-D_strnicmp=strncasecmp',
+  '-Dstrnicmp=strncasecmp',
+  '-D_vsnprintf=vsnprintf',
+  '-D_alloca=alloca',
+  '-Dstrcmpi=strcasecmp',
+  '-DPOSIX',
+  '-DGNUC',
+  '-DCOMPILER_GCC',
+  '-DNO_MALLOC_OVERRIDE',
+]
+
+sdklib_undefines = [
+  '-Usprintf',
+  '-Ustrncpy',
+  '-UPROTECTED_THINGS_ENABLE',
+]
+
+subdir('mathlib')
+subdir('tier1')
+subdir('interfaces')
+
+sdk_static_libs = [
+  mathlib,
+  tier1,
+  interfaces,
+]
+
+compiler = meson.get_compiler('cpp')
+
 if target_machine.system() == 'linux'
   if target_machine.cpu_family() == 'x86_64'
-    sdk_static_libs = files([
-      'lib/linux64/mathlib.a',
-      'lib/linux64/tier1.a',
-      'lib/linux64/interfaces.a',
-      'lib/linux64/release/libprotobuf.a'
-    ])
-    sdk_dynamic_libs = files([
-      'lib/linux64/libtier0.so'
-    ])
+    sdk_static_libs += [
+      compiler.find_library('protobuf', dirs: [meson.project_source_root() + '/lib/linux64/release']),
+    ]
+    sdk_dynamic_libs = compiler.find_library('tier0', dirs: [meson.project_source_root() + '/lib/linux64'])
   endif
 
   sdk_cpp_args = [
@@ -51,21 +115,11 @@ if target_machine.system() == 'linux'
   protoc = find_program('devtools/bin/linux/protoc')
 
 elif target_machine.system() == 'windows'
-  if target_machine.cpu_family() == 'x86_64'
-    sdk_static_libs = files([
-      'lib/public/win64/2015/libprotobuf.lib',
-      'lib/public/win64/mathlib.lib',
-      'lib/public/win64/tier0.lib',
-      'lib/public/win64/tier1.lib',
-      'lib/public/win64/interfaces.lib'
-    ])
-    sdk_dynamic_libs = files([])
-  endif
-
-  sdk_cpp_args = []
-
+  sdk_static_libs += [
+    compiler.find_library('tier0', dirs: [meson.project_source_root() + '/lib/public/win64']),
+    compiler.find_library('protobuf', dirs: [meson.project_source_root() + '/lib/public/win64/2015']),
+  ]
   protoc = find_program('devtools/bin/protoc.exe')
-
 endif
 
 # @SOURCE_DIR@ is broken for subprojects see: https://github.com/mesonbuild/meson/issues/11994
