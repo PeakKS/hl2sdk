@@ -1,5 +1,6 @@
 project('hl2sdk-cs2', 'c', 'cpp', default_options: [
   'warning_level=1',
+  'werror=false',
   'cpp_std=c++14',
 ])
 
