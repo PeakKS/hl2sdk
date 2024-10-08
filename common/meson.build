@@ -8,5 +8,5 @@ proto_files = [
 ]
 
 foreach proto_file : proto_files
-  sdk_proto += proto_gen.process(proto_file)
+  proto_gen_src += proto_gen.process(proto_file)
 endforeach

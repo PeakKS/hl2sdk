@@ -25,16 +25,25 @@ mathlib = static_library(
   mathlib_src,
   name_prefix: '',
   pic: true,
-  include_directories: [
-    public_inc,
-    tier0_inc,
-    tier1_inc,
-    mathlib_inc,
-  ],
+  include_directories: include_directories([
+    '../public',
+    '../public/tier0',
+    '../public/tier1',
+    '../public/mathlib',
+  ]),
   cpp_args: [
     sdklib_cflags,
     sdklib_defines,
     sdklib_undefines,
     '-D_LIB',
   ],
+)
+
+mathlib_dep = declare_dependency(
+  link_with: [
+    mathlib,
+  ],
+  include_directories: include_directories([
+    '../public/mathlib',
+  ])
 )

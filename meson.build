@@ -17,27 +17,14 @@ sdk_cpp_args = [
 ]
 
 sdk_source2 = true
-sdk_inc = include_directories([
-  'thirdparty/protobuf-3.21.8/src',
-  'public',
-  'public/engine',
-  'public/mathlib',
-  'public/vstdlib',
-  'public/tier0',
-  'public/tier1',
-  'public/entity2',
-  'public/game/server',
-  'game/shared',
-  'game/server',
-  'common'
-])
-
-public_inc = include_directories('public')
-tier0_inc = include_directories('public/tier0')
-tier1_inc = include_directories('public/tier1')
-mathlib_inc = include_directories('public/mathlib')
 
 sdklib_cflags = [
+  '-O3',
+  '-march=nocona',
+  '-mmmx',
+  '-msse',
+  '-msse2',
+  '-m64',
   '-fno-strict-aliasing',
   '-Wall',
   '-Wsign-compare',
@@ -49,23 +36,9 @@ sdklib_cflags = [
   '-Wno-unused',
   '-Wno-c++11-narrowing',
   '-Wno-register',
-  '-O3',
-  '-march=nocona',
-  '-mmmx',
-  '-msse',
-  '-msse2',
-  '-m64',
 ]
 
-sdklib_defines = []
-if target_machine.system() == 'linux'
-  sdklib_defines += [
-    '-D_LINUX',
-    '-DLINUX',
-  ]
-endif
-
-sdklib_defines += [
+sdklib_defines = [
   '-DX64BITS',
   '-DPLATFORM_64BITS',
   '-DVPROF_LEVEL=1',
@@ -84,45 +57,53 @@ sdklib_defines += [
   '-DNO_MALLOC_OVERRIDE',
 ]
 
+if target_machine.system() == 'linux'
+  sdklib_defines += [
+    '-D_LINUX',
+    '-DLINUX',
+  ]
+endif
+
 sdklib_undefines = [
   '-Usprintf',
   '-Ustrncpy',
   '-UPROTECTED_THINGS_ENABLE',
 ]
 
-subdir('mathlib')
-subdir('tier1')
-subdir('interfaces')
-
-sdk_libs = [
-  mathlib,
-  tier1,
-  interfaces,
-]
-
 compiler = meson.get_compiler('cpp')
 
 if target_machine.system() == 'linux'
-  if target_machine.cpu_family() == 'x86_64'
-    sdk_deps = [
-      compiler.find_library('protobuf', dirs: [meson.project_source_root() + '/lib/linux64/release']),
-      compiler.find_library('tier0', dirs: [meson.project_source_root() + '/lib/linux64']),
-    ]
-  endif
-
-  sdk_cpp_args = [
-    '-D_GLIBCXX_USE_CXX11_ABI=0'
-  ]
-
+  tier0 = compiler.find_library('tier0', dirs: [meson.project_source_root() + '/lib/linux64'])
+  protobuf = compiler.find_library('protobuf', dirs: [meson.project_source_root() + '/lib/linux64/release'])
   protoc = find_program('devtools/bin/linux/protoc')
-
 elif target_machine.system() == 'windows'
-  sdk_deps = [
-    compiler.find_library('tier0', dirs: [meson.project_source_root() + '/lib/public/win64']),
-    compiler.find_library('protobuf', dirs: [meson.project_source_root() + '/lib/public/win64/2015']),
-  ]
+  tier0 = compiler.find_library('tier0', dirs: [meson.project_source_root() + '/lib/public/win64'])
+  protobuf = compiler.find_library('protobuf', dirs: [meson.project_source_root() + '/lib/public/win64/2015'])
   protoc = find_program('devtools/bin/protoc.exe')
 endif
+
+
+tier0_dep = declare_dependency(
+  dependencies: [
+    tier0,
+  ],
+  include_directories: include_directories([
+    'public/tier0',
+  ])
+)
+
+protobuf_dep = declare_dependency(
+  dependencies: [
+    protobuf,
+  ],
+  include_directories: include_directories([
+    'thirdparty/protobuf-3.21.8/src/'
+  ]),
+)
+
+subdir('tier1')
+subdir('mathlib')
+subdir('interfaces')
 
 # @SOURCE_DIR@ is broken for subprojects see: https://github.com/mesonbuild/meson/issues/11994
 proto_gen = generator(
@@ -143,16 +124,42 @@ proto_gen = generator(
   ]
 )
 
-sdk_proto=[]
+proto_gen_src=[]
 subdir('common')
 subdir('game')
 subdir('gcsdk')
 
-sdk_proto_lib = static_library(
-  'cs2proto',
-  sources: sdk_proto,
-  cpp_args: [],
-  include_directories: [
-    sdk_inc,
+proto_dep = declare_dependency(
+  compile_args: [
+    '-D_GLIBCXX_USE_CXX11_ABI=0',
   ],
+  sources: [
+    proto_gen_src,
+  ],
+  include_directories: [
+    include_directories([
+      'thirdparty/protobuf-3.21.8/src',
+    ])
+  ],
+)
+
+sdk_dep = declare_dependency(
+  dependencies: [
+    tier0_dep,
+    tier1_dep,
+    mathlib_dep,
+    interfaces_dep,
+    protobuf_dep,
+    proto_dep,
+  ],
+  include_directories: include_directories([
+    'public',
+    'public/engine',
+    'public/vstdlib',
+    'public/entity2',
+    'public/game/server',
+    'game/shared',
+    'game/server',
+    'common',
+  ]),
 )
