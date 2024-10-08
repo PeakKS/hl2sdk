@@ -4,19 +4,10 @@ project('hl2sdk-cs2', 'c', 'cpp', default_options: [
   'cpp_std=c++14',
 ])
 
-sdk_platforms = {
+supported_platforms = {
   'linux': ['x86_64'],
   'windows': ['x86_64'],
 }
-
-sdk_suffix = '2.cs2'
-sdk_cpp_args = [
-  '-DSOURCE_ENGINE=25',
-  '-DSE_CS2=25',
-  '-DCS2',
-]
-
-sdk_source2 = true
 
 sdklib_cflags = [
   '-O3',
@@ -51,16 +42,16 @@ sdklib_defines = [
   '-D_vsnprintf=vsnprintf',
   '-D_alloca=alloca',
   '-Dstrcmpi=strcasecmp',
-  '-DPOSIX',
-  '-DGNUC',
-  '-DCOMPILER_GCC',
-  '-DNO_MALLOC_OVERRIDE',
 ]
 
 if target_machine.system() == 'linux'
   sdklib_defines += [
     '-D_LINUX',
     '-DLINUX',
+    '-DPOSIX',
+    '-DGNUC',
+    '-DCOMPILER_GCC',
+    '-DNO_MALLOC_OVERRIDE',
   ]
 endif
 
@@ -143,23 +134,36 @@ proto_dep = declare_dependency(
   ],
 )
 
-sdk_dep = declare_dependency(
-  dependencies: [
-    tier0_dep,
-    tier1_dep,
-    mathlib_dep,
-    interfaces_dep,
-    protobuf_dep,
-    proto_dep,
-  ],
-  include_directories: include_directories([
-    'public',
-    'public/engine',
-    'public/vstdlib',
-    'public/entity2',
-    'public/game/server',
-    'game/shared',
-    'game/server',
-    'common',
-  ]),
-)
+if target_machine.system() in supported_platforms
+  if target_machine.cpu_family() in supported_platforms[target_machine.system()]
+    cs2_dep = declare_dependency(
+      variables: {
+        'suffix': '2.cs2',
+        'engine': 'source2',
+      },
+      compile_args: [
+        '-DSOURCE_ENGINE=25',
+        '-DSE_CS2=25',
+        '-DCS2',
+      ],
+      dependencies: [
+        tier0_dep,
+        tier1_dep,
+        mathlib_dep,
+        interfaces_dep,
+        protobuf_dep,
+        proto_dep,
+      ],
+      include_directories: include_directories([
+        'public',
+        'public/engine',
+        'public/vstdlib',
+        'public/entity2',
+        'public/game/server',
+        'game/shared',
+        'game/server',
+        'common',
+      ]),
+    )
+  endif
+endif
