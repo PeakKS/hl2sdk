@@ -147,6 +147,7 @@ if target_machine.system() in supported_platforms
         '-DCS2',
       ],
       sources: [
+        'public/tier0/memoverride.cpp',
         'tier1/convar.cpp',
       ],
       dependencies: [
