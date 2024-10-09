@@ -146,6 +146,9 @@ if target_machine.system() in supported_platforms
         '-DSE_CS2=25',
         '-DCS2',
       ],
+      sources: [
+        'tier1/convar.cpp',
+      ],
       dependencies: [
         tier0_dep,
         tier1_dep,

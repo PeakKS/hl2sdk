@@ -1,7 +1,6 @@
 tier1_src = [
 	'bitbuf.cpp',
 	'commandbuffer.cpp',
-  'convar.cpp',
 	'generichash.cpp',
 	'rangecheckedvar.cpp',
 	'tier1.cpp',
